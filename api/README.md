@@ -24,12 +24,16 @@ Em outro terminal, execute `node api/smoke.mjs`. A rota `GET /health` responde H
 
 ## Entrega na VPS
 
-O projeto Docker `aciona-api` usa o proxy HTTPS existente na VPS. Ele tem um endereço próprio e publica o serviço sem abrir uma porta no host. O arquivo [compose.vps.yaml](compose.vps.yaml) recebe `ACIONA_REVISION` com o SHA completo de um commit do Aciona. A imagem é construída só com a pasta `api/` dessa revisão.
+O projeto Docker `aciona-api` usa o proxy HTTPS existente na VPS. O contêiner entra em uma rede dedicada, publica sem abrir uma porta no host e monta `api/server.mjs` em modo somente leitura. O modelo [compose.vps.yaml](compose.vps.yaml) é mantido por um administrador da VPS. A imagem do Node.js fica fixada por digest.
 
-Depois de aplicar o Compose no projeto do Aciona, execute:
+Abra um pull request de `develop` para `deploy/aciona-api` quando a API estiver pronta para publicação. O merge dispara **Publicar API do Aciona**, que usa uma chave exclusiva do ambiente `aciona-api` no GitHub. O servidor só aceita a revisão que estiver na ponta dessa branch. A publicação aplica somente o serviço `api` no projeto `aciona-api` e restaura a configuração anterior se a verificação falhar.
+
+Para validar a revisão em execução:
 
 ```sh
 node api/smoke.mjs https://api-aciona.techtupa.com.br SHA_COMPLETO
 ```
 
-Para voltar a uma revisão conhecida, aplique a configuração com o SHA anterior e repita o teste. O fluxo de publicação do frontend usa sua própria branch `deploy/aciona`. Os PRs da API para `develop` passam pela verificação **Validar API** do GitHub. O deploy automático da API depende de uma credencial de implantação restrita ao serviço; a validação do GitHub roda sem essa credencial.
+Para reverter uma publicação, abra um PR com a reversão e publique a nova revisão pela mesma branch. A checagem dos PRs para `develop` roda sem a chave de deploy. O frontend continua na branch `deploy/aciona`.
+
+O formato atual publica o exemplo de um arquivo. Quando a API passar a usar módulos ou dependências adicionais, atualize o contrato da publicação com o administrador antes de enviar a versão.

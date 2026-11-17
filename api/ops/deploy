@@ -1,0 +1,81 @@
+#!/bin/bash
+set -euo pipefail
+export PATH=/usr/sbin:/usr/bin:/sbin:/bin
+umask 077
+
+if [[ $# != 1 || ! $1 =~ ^[0-9a-f]{40}$ ]]; then
+  printf 'Informe uma revisão Git de 40 caracteres.\n' >&2
+  exit 64
+fi
+
+revision=$1
+state=/var/lib/aciona-api
+project=/docker/aciona-api
+compose=$project/docker-compose.yml
+env_file=$project/.env
+template=/etc/aciona-api/compose.yaml
+repository=https://github.com/techtupa/aciona.git
+release_ref=refs/heads/deploy/aciona-api
+
+exec 9>"$state/deploy.lock"
+flock -w 60 9
+
+git --git-dir="$state/git" fetch --quiet --no-tags --depth=1 "$repository" "$release_ref"
+if [[ $(git --git-dir="$state/git" rev-parse FETCH_HEAD) != "$revision" ]]; then
+  printf 'A revisão solicitada deixou de ser a ponta da branch de publicação.\n' >&2
+  exit 65
+fi
+
+stage=$(mktemp -d "$state/stage.XXXXXX")
+trap 'rm -rf -- "$stage"' EXIT
+git --git-dir="$state/git" show "$revision:api/server.mjs" >"$stage/server.mjs"
+install -d -m 0755 -- "$state/releases/$revision"
+install -m 0444 -- "$stage/server.mjs" "$state/releases/$revision/server.mjs"
+printf 'ACIONA_REVISION=%s\n' "$revision" >"$stage/next.env"
+
+run_compose() {
+  local env_path=$1
+  local compose_path=$2
+  shift 2
+  /usr/bin/docker compose --project-name aciona-api --project-directory "$project" \
+    --env-file "$env_path" --file "$compose_path" "$@"
+}
+
+probe() {
+  local expected=$1
+  local body
+  local attempt
+  for attempt in {1..6}; do
+    if body=$(/usr/bin/curl --fail --silent --max-time 5 https://api-aciona.techtupa.com.br/health) &&
+       /usr/bin/python3 -c 'import json, sys; r=json.load(sys.stdin); sys.exit(0 if (r.get("status"), r.get("service"), r.get("revision")) == ("ok", "aciona-api", sys.argv[1]) else 1)' "$expected" <<<"$body"; then
+      return 0
+    fi
+    sleep 1
+  done
+  return 1
+}
+
+run_compose "$stage/next.env" "$template" config --quiet
+cp -- "$compose" "$stage/previous.compose"
+cp -- "$env_file" "$stage/previous.env"
+previous_revision=$(/usr/bin/docker inspect --format '{{range .Config.Env}}{{println .}}{{end}}' aciona-api-api-1 |
+  sed -n 's/^ACIONA_REVISION=//p')
+
+if install -m 0640 -- "$template" "$compose" &&
+   install -m 0640 -- "$stage/next.env" "$env_file" &&
+   run_compose "$env_file" "$compose" up -d --no-deps --wait --wait-timeout 45 api &&
+   probe "$revision"; then
+  printf 'Aciona API publicada em %s.\n' "$revision"
+  exit 0
+fi
+
+printf 'Falha ao validar %s. Restaurando a revisão anterior.\n' "$revision" >&2
+if install -m 0640 -- "$stage/previous.compose" "$compose" &&
+   install -m 0640 -- "$stage/previous.env" "$env_file" &&
+   run_compose "$env_file" "$compose" up -d --no-deps --wait --wait-timeout 45 api &&
+   probe "$previous_revision"; then
+  printf 'Revisão anterior restaurada.\n' >&2
+else
+  printf 'A restauração automática requer verificação na VPS.\n' >&2
+fi
+exit 1
