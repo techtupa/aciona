@@ -1,0 +1,40 @@
+name: Publicar API do Aciona
+
+on:
+  push:
+    branches: [deploy/aciona-api]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: aciona-api-publicacao
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: aciona-api
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - name: Publicar pelo acesso restrito da API
+        shell: bash
+        env:
+          ACIONA_DEPLOY_KEY: ${{ secrets.ACIONA_DEPLOY_KEY }}
+          ACIONA_SSH_HOST_KEY: ${{ vars.ACIONA_SSH_HOST_KEY }}
+        run: |
+          test -n "$ACIONA_DEPLOY_KEY"
+          test -n "$ACIONA_SSH_HOST_KEY"
+          umask 077
+          ssh_dir="$(mktemp -d)"
+          trap 'rm -rf -- "$ssh_dir"' EXIT
+          printf '%s\n' "$ACIONA_DEPLOY_KEY" | tr -d '\r' >"$ssh_dir/key"
+          printf '%s\n' "$ACIONA_SSH_HOST_KEY" >"$ssh_dir/known_hosts"
+          ssh -T -i "$ssh_dir/key" -o IdentitiesOnly=yes -o BatchMode=yes \
+            -o ConnectTimeout=15 -o StrictHostKeyChecking=yes -o "UserKnownHostsFile=$ssh_dir/known_hosts" \
+            aciona-deploy@api-aciona.techtupa.com.br "deploy $GITHUB_SHA"
+      - name: Verificar a revisão pública
+        run: node api/smoke.mjs https://api-aciona.techtupa.com.br "$GITHUB_SHA"
