@@ -1,0 +1,40 @@
+name: aciona-api
+
+services:
+  api:
+    image: aciona-api:${ACIONA_REVISION:?Use o SHA completo da revisão}
+    build:
+      context: https://github.com/techtupa/aciona.git#${ACIONA_REVISION}:api
+      args:
+        ACIONA_REVISION: ${ACIONA_REVISION}
+    pull_policy: build
+    restart: unless-stopped
+    init: true
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 128m
+    pids_limit: 64
+    cpus: 0.5
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/health').then(r => { if (!r.ok) process.exit(1) }).catch(() => process.exit(1))"]
+      interval: 30s
+      timeout: 4s
+      start_period: 5s
+      retries: 3
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: root_default
+      traefik.http.routers.aciona-api.rule: "Host(`api-aciona.techtupa.com.br`)"
+      traefik.http.routers.aciona-api.entrypoints: websecure
+      traefik.http.routers.aciona-api.tls.certresolver: mytlschallenge
+      traefik.http.services.aciona-api.loadbalancer.server.port: "3000"
+    networks:
+      - proxy
+
+networks:
+  proxy:
+    external: true
+    name: root_default
