@@ -1,0 +1,28 @@
+name: Validar API
+
+on:
+  pull_request:
+    branches: [develop]
+    paths:
+      - 'api/**'
+      - '.github/workflows/verify-api.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - name: Construir e testar o contêiner
+        shell: bash
+        run: |
+          docker build --build-arg "ACIONA_REVISION=$GITHUB_SHA" -t aciona-api:ci ./api
+          docker run -d --name aciona-api-ci -p 127.0.0.1:3000:3000 aciona-api:ci
+          trap 'docker rm -f aciona-api-ci >/dev/null' EXIT
+          curl --fail --silent --show-error --retry 10 --retry-all-errors --retry-delay 1 http://127.0.0.1:3000/health
+          node api/smoke.mjs http://127.0.0.1:3000 "$GITHUB_SHA"
