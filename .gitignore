@@ -1,0 +1,6 @@
+# variáveis de ambiente com chaves e senhas (nunca vão para o Git)
+.env
+.env.*
+!.env.example
+
+node_modules/
