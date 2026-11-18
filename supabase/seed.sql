@@ -141,3 +141,46 @@ WHERE NOT EXISTS (
 -- o mais antigo recebe o menor número, como aconteceria de verdade
 ORDER BY idade DESC
 ON CONFLICT (id_solicitacao) DO NOTHING;
+
+-- ORB-18: contas de teste (SÓ no Supabase local; senha fictícia para todas: Teste@1234)
+-- morador e síndico do Vista, morador e síndico do Aurora e uma conta sem vínculo
+WITH contas (id, email) AS (VALUES
+  ('00000000-0000-0000-0000-0000000000a1'::uuid, 'morador.vista@teste.local'),
+  ('00000000-0000-0000-0000-0000000000a2'::uuid, 'sindico.vista@teste.local'),
+  ('00000000-0000-0000-0000-0000000000a3'::uuid, 'morador.aurora@teste.local'),
+  ('00000000-0000-0000-0000-0000000000a4'::uuid, 'sindico.aurora@teste.local'),
+  ('00000000-0000-0000-0000-0000000000a5'::uuid, 'sem.vinculo@teste.local')
+)
+INSERT INTO auth.users (
+  instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
+  raw_app_meta_data, raw_user_meta_data, created_at, updated_at,
+  confirmation_token, email_change, email_change_token_new, recovery_token
+)
+SELECT
+  '00000000-0000-0000-0000-000000000000', id, 'authenticated', 'authenticated', email,
+  extensions.crypt('Teste@1234', extensions.gen_salt('bf')), NOW(),
+  '{"provider": "email", "providers": ["email"]}', '{}', NOW(), NOW(),
+  '', '', '', ''
+FROM contas
+ON CONFLICT (id) DO NOTHING;
+
+-- identidade de e-mail de cada conta (o login por e-mail e senha precisa dela)
+INSERT INTO auth.identities (id, user_id, provider_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
+SELECT gen_random_uuid(), u.id, u.id::text,
+       jsonb_build_object('sub', u.id::text, 'email', u.email, 'email_verified', true),
+       'email', NOW(), NOW(), NOW()
+FROM auth.users u
+WHERE u.email LIKE '%@teste.local'
+ON CONFLICT DO NOTHING;
+
+-- vínculos: quem é morador ou síndico de qual condomínio
+INSERT INTO vinculos (usuario_id, condominio_id, papel)
+SELECT v.usuario_id, c.id, v.papel
+FROM (VALUES
+  ('00000000-0000-0000-0000-0000000000a1'::uuid, 'Vista',  'morador'),
+  ('00000000-0000-0000-0000-0000000000a2'::uuid, 'Vista',  'sindico'),
+  ('00000000-0000-0000-0000-0000000000a3'::uuid, 'Aurora', 'morador'),
+  ('00000000-0000-0000-0000-0000000000a4'::uuid, 'Aurora', 'sindico')
+) AS v (usuario_id, condominio, papel)
+JOIN condominios c ON c.nome = v.condominio
+ON CONFLICT DO NOTHING;
