@@ -47,12 +47,19 @@ CREATE POLICY "ocorrencias: morador ve os seus" ON ocorrencias
   FOR SELECT TO authenticated
   USING (criado_por = (SELECT auth.uid()));
 
--- ocorrências, gravação: só em condomínio vinculado e sempre em nome de quem está logado
+-- ocorrências, gravação: só em condomínio vinculado, sempre em nome de quem está logado
+-- e sempre começando como 'registrada' (ninguém abre um chamado já "resolvido")
 CREATE POLICY "ocorrencias: registrar no meu condominio" ON ocorrencias
   FOR INSERT TO authenticated
   WITH CHECK (
     criado_por = (SELECT auth.uid())
+    AND status = 'registrada'
     AND condominio_id IN (SELECT v.condominio_id FROM vinculos v WHERE v.usuario_id = (SELECT auth.uid())));
+
+-- ao gravar, só dá pra preencher os campos do relato; status, datas e criado_por
+-- ficam com o valor padrão do banco (mesmo chamando a API REST do Supabase direto)
+REVOKE INSERT ON ocorrencias FROM anon, authenticated;
+GRANT INSERT (condominio_id, categoria, local, descricao, origem, id_solicitacao) ON ocorrencias TO authenticated;
 
 -- ocorrências, operação: só o síndico muda, e só no condomínio dele
 CREATE POLICY "ocorrencias: sindico atualiza" ON ocorrencias
