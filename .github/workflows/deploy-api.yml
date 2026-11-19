@@ -12,7 +12,34 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  simular-migrations:
+    if: startsWith(github.event.head_commit.message, 'Simular migrations do Aciona:')
+    runs-on: ubuntu-latest
+    environment: aciona-api
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: 07e0f3533632e3a3840db1c98405fca17522518c
+          sparse-checkout: supabase/migrations
+          persist-credentials: false
+      - name: Conferir conexão e migrations pendentes
+        shell: bash
+        env:
+          ACIONA_SUPABASE_DB_URL: ${{ secrets.ACIONA_SUPABASE_DB_URL }}
+        run: |
+          set -euo pipefail
+          if [[ -z "$ACIONA_SUPABASE_DB_URL" ]]; then
+            echo '::error::ACIONA_SUPABASE_DB_URL indisponível no ambiente aciona-api.'
+            exit 1
+          fi
+          if ! npm exec --yes --package=supabase@2.122.0 -- supabase db push \
+            --db-url "$ACIONA_SUPABASE_DB_URL" --skip-vault --dry-run --yes; then
+            echo '::error::A CLI não conseguiu concluir a simulação. Consulte a saída sanitizada da etapa.'
+            exit 1
+          fi
   deploy:
+    if: "!startsWith(github.event.head_commit.message, 'Simular migrations do Aciona:')"
     runs-on: ubuntu-latest
     environment: aciona-api
     timeout-minutes: 6
