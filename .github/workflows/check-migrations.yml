@@ -1,0 +1,30 @@
+name: Simular migrations do Aciona
+
+on:
+  push:
+    branches: [chore/aciona-migrations-ci]
+
+permissions:
+  contents: read
+
+jobs:
+  dry-run:
+    runs-on: ubuntu-latest
+    environment: aciona-api
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - name: Conferir conexão e migrations pendentes
+        shell: bash
+        env:
+          ACIONA_SUPABASE_DB_URL: ${{ secrets.ACIONA_SUPABASE_DB_URL }}
+        run: |
+          set -euo pipefail
+          if [[ -z "$ACIONA_SUPABASE_DB_URL" ]]; then
+            echo 'ACIONA_SUPABASE_DB_URL indisponível no ambiente aciona-api.' >&2
+            exit 1
+          fi
+          npm exec --yes --package=supabase@2.122.0 -- supabase db push \
+            --db-url "$ACIONA_SUPABASE_DB_URL" --skip-vault --dry-run --yes
