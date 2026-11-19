@@ -26,11 +26,11 @@ jobs:
       - name: Conferir conexão e migrations pendentes
         shell: bash
         env:
-          ACIONA_SUPABASE_DB_URL: ${{ secrets.ACIONA_SUPABASE_DB_URL }}
+          ACIONA_SUPABASE_DB_URL: ${{ secrets.ACIONASUPABASEDB_URL }}
         run: |
           set -euo pipefail
           if [[ -z "$ACIONA_SUPABASE_DB_URL" ]]; then
-            echo '::error::ACIONA_SUPABASE_DB_URL indisponível no ambiente aciona-api.'
+            echo '::error::ACIONASUPABASEDB_URL indisponível no ambiente aciona-api.'
             exit 1
           fi
           if ! npm exec --yes --package=supabase@2.122.0 -- supabase db push \
