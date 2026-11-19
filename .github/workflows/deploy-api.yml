@@ -25,11 +25,11 @@ jobs:
       - name: Aplicar migrations do Aciona
         shell: bash
         env:
-          ACIONA_SUPABASE_DB_URL: ${{ secrets.ACIONA_SUPABASE_DB_URL }}
+          ACIONA_SUPABASE_DB_URL: ${{ secrets.ACIONASUPABASEDB_URL }}
         run: |
           set -euo pipefail
           if [[ -z "$ACIONA_SUPABASE_DB_URL" ]]; then
-            echo 'Configure ACIONA_SUPABASE_DB_URL no ambiente aciona-api.' >&2
+            echo 'Configure ACIONASUPABASEDB_URL no ambiente aciona-api.' >&2
             exit 1
           fi
           if ! compgen -G 'supabase/migrations/*.sql' > /dev/null; then
