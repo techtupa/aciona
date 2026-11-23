@@ -1,9 +1,9 @@
 .condominium-card {
   display: flex;
   flex-direction: column;
-  gap: 6px;
   width: 100%;
-  padding: 16px;
+  gap: var(--spacing-6);
+  padding: var(--spacing-16);
   box-sizing: border-box;
 
   background-color: var(--color-primary-light);

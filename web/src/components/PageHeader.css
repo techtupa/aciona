@@ -2,16 +2,16 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: var(--spacing-16);
   width: 100%;
-  padding: 16px 24px;
+  padding: var(--spacing-16) var(--spacing-24);
   box-sizing: border-box;
 }
 
 .page-header__brand {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--spacing-10);
   min-width: 0;
 }
 
@@ -32,7 +32,7 @@
 .page-header__user {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: var(--spacing-16);
   flex-shrink: 0;
 }
 
@@ -43,7 +43,7 @@
 
 .page-header__user button {
   min-height: 44px;
-  padding: 8px 12px;
+  padding: var(--spacing-8) var(--spacing-12);
   border: none;
   border-radius: var(--radius-sm);
   background: transparent;
@@ -61,12 +61,12 @@
 
 @media (max-width: 480px) {
   .page-header {
-    padding: 12px;
-    gap: 8px;
+    padding: var(--spacing-12);
+    gap: var(--spacing-8);
   }
 
   .page-header__brand {
-    gap: 6px;
+    gap: var(--spacing-6);
   }
 
   .page-header__brand h1 {
@@ -74,7 +74,7 @@
   }
 
   .page-header__user {
-    gap: 8px;
+    gap: var(--spacing-8);
   }
 
   .page-header__user span,
