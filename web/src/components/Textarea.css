@@ -1,48 +1,53 @@
-
 .textarea-field {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--spacing-8);
   width: 100%;
 }
 
 .textarea-field label {
   font-size: 14px;
   font-weight: 500;
-  color: #263B3A;
+  color: var(--color-text-primary);
 }
 
 .textarea-field textarea {
   width: 100%;
   min-height: 120px;
-  padding: 12px;
+  padding: var(--spacing-12);
   box-sizing: border-box;
 
-  border: 1px solid #D5DEDC;
-  border-radius: 6px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
 
   font-family: inherit;
   font-size: 14px;
-  color: #263B3A;
-  background-color: #FFFFFF;
+  color: var(--color-text-primary);
+  background-color: var(--color-background);
 
   resize: vertical;
 }
 
 .textarea-field textarea::placeholder {
-  color: #899694;
+  color: var(--color-text-placeholder);
 }
 
-.textarea-field textarea:focus {
-  outline: 2px solid #79BDB0;
-  border-color: #075D5B;
+.textarea-field textarea:focus-visible {
+  outline: 2px solid var(--color-focus);
+  border-color: var(--color-primary);
 }
 
 .textarea-field textarea[aria-invalid="true"] {
-  border-color: #C0392B;
+  border-color: var(--color-error);
+  background-color: var(--color-error-background);
+}
+
+.textarea-field textarea[aria-invalid="true"]:focus-visible {
+  outline-color: var(--color-error);
 }
 
 .textarea-error {
   font-size: 12px;
-  color: #C0392B;
+  line-height: 1.5;
+  color: var(--color-error);
 }

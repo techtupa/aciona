@@ -1,3 +1,4 @@
+
 import './Button.css'
 
 function Button({
@@ -6,6 +7,7 @@ function Button({
   variant = 'primary',
   onClick,
   disabled = false,
+  ...props
 }) {
   return (
     <button
@@ -13,6 +15,7 @@ function Button({
       className={`button button--${variant}`}
       onClick={onClick}
       disabled={disabled}
+      {...props}
     >
       {children}
     </button>
