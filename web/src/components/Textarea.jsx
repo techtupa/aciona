@@ -11,6 +11,7 @@ function Textarea({
   required = false,
   rows = 4,
   error,
+  ...props
 }) {
   return (
     <div className="textarea-field">
@@ -28,6 +29,7 @@ function Textarea({
         rows={rows}
         aria-invalid={Boolean(error)}
         aria-describedby={error ? `${id}-error` : undefined}
+        {...props}
       />
 
       {error && (

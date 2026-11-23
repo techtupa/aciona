@@ -11,6 +11,8 @@ function Input({
   onChange,
   required = false,
   error,
+  autoComplete,
+  ...props
 }) {
   return (
     <div className="input-field">
@@ -26,8 +28,10 @@ function Input({
         value={value}
         onChange={onChange}
         required={required}
+        autoComplete={autoComplete}
         aria-invalid={Boolean(error)}
         aria-describedby={error ? `${id}-error` : undefined}
+        {...props}
       />
 
       {error && (

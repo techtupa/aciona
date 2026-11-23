@@ -1,4 +1,3 @@
-
 .condominium-card {
   display: flex;
   flex-direction: column;
@@ -7,18 +6,19 @@
   padding: 16px;
   box-sizing: border-box;
 
-  background-color: #E5F4EF;
-  border: 1px solid #D5DEDC;
-  border-radius: 8px;
+  background-color: var(--color-primary-light);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
 }
 
 .condominium-card__label {
   font-size: 12px;
-  color: #667875;
+  color: var(--color-text-secondary);
 }
 
 .condominium-card__name {
   font-size: 16px;
   font-weight: 600;
-  color: #263B3A;
+  color: var(--color-text-primary);
+  overflow-wrap: anywhere;
 }

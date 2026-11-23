@@ -1,4 +1,3 @@
-
 .input-field {
   display: flex;
   flex-direction: column;
@@ -9,7 +8,7 @@
 .input-field label {
   font-size: 14px;
   font-weight: 500;
-  color: #263B3A;
+  color: var(--color-text-primary);
 }
 
 .input-field input {
@@ -18,29 +17,35 @@
   padding: 12px;
   box-sizing: border-box;
 
-  border: 1px solid #D5DEDC;
-  border-radius: 6px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
 
   font-family: inherit;
   font-size: 14px;
-  color: #263B3A;
-  background-color: #FFFFFF;
+  color: var(--color-text-primary);
+  background-color: var(--color-background);
 }
 
 .input-field input::placeholder {
-  color: #899694;
+  color: var(--color-text-placeholder);
 }
 
-.input-field input:focus {
-  outline: 2px solid #79BDB0;
-  border-color: #075D5B;
+.input-field input:focus-visible {
+  outline: 2px solid var(--color-focus);
+  border-color: var(--color-primary);
 }
 
 .input-field input[aria-invalid="true"] {
-  border-color: #C0392B;
+  border-color: var(--color-error);
+  background-color: var(--color-error-background);
+}
+
+.input-field input[aria-invalid="true"]:focus-visible {
+  outline-color: var(--color-error);
 }
 
 .input-error {
   font-size: 12px;
-  color: #C0392B;
+  line-height: 1.5;
+  color: var(--color-error);
 }
