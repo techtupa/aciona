@@ -59,3 +59,6 @@ FROM (VALUES
 ) AS m (categoria_slug, area_slug)
 JOIN areas_atendimento a ON a.slug = m.area_slug
 WHERE c.slug = m.categoria_slug;
+
+-- Agora toda categoria tem área. Se sobrasse alguma sem área, este comando falharia e a migração toda seria desfeita.
+ALTER TABLE categorias ALTER COLUMN area_id SET NOT NULL;
