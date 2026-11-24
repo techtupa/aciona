@@ -1,24 +1,22 @@
 .condominium-card {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--spacing-16);
   width: 100%;
-  gap: var(--spacing-6);
   padding: var(--spacing-16);
   box-sizing: border-box;
-
-  background-color: var(--color-primary-light);
-  border: 1px solid var(--color-border);
+  background-color: #E0F3ED;
   border-radius: var(--radius-md);
-}
-
-.condominium-card__label {
-  font-size: 12px;
-  color: var(--color-text-secondary);
 }
 
 .condominium-card__name {
   font-size: 16px;
   font-weight: 600;
-  color: var(--color-text-primary);
-  overflow-wrap: anywhere;
+  color: #07575A;
+}
+
+.condominium-card__label {
+  font-size: 12px;
+  color: var(--color-text-secondary);
 }

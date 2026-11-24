@@ -1,0 +1,29 @@
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 100%;
+  padding: 4px 10px;
+  border-radius: var(--radius-md);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.5;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.status-badge--registered {
+  color: var(--color-status-registered);
+  background-color: var(--color-status-registered-background);
+}
+
+.status-badge--progress {
+  color: var(--color-status-progress);
+  background-color: var(--color-status-progress-background);
+}
+
+.status-badge--resolved {
+  color: var(--color-status-resolved);
+  background-color: var(--color-status-resolved-background);
+}
