@@ -62,3 +62,25 @@ WHERE c.slug = m.categoria_slug;
 
 -- Agora toda categoria tem área. Se sobrasse alguma sem área, este comando falharia e a migração toda seria desfeita.
 ALTER TABLE categorias ALTER COLUMN area_id SET NOT NULL;
+
+-- Área inativa não recebe categoria nova: a chave estrangeira não vê o "ativo", então a conferência é aqui.
+CREATE FUNCTION impedir_area_inativa() RETURNS TRIGGER AS $$
+DECLARE
+  v_nome VARCHAR(60);
+BEGIN
+  -- reenviar a mesma área não é ligação nova
+  IF TG_OP = 'UPDATE' AND NEW.area_id = OLD.area_id THEN
+    RETURN NEW;
+  END IF;
+  SELECT a.nome INTO v_nome FROM areas_atendimento a WHERE a.id = NEW.area_id AND NOT a.ativo;
+  IF FOUND THEN
+    RAISE EXCEPTION 'A área "%" está inativa e não aceita categorias.', v_nome
+      USING ERRCODE = 'check_violation';
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_categorias_area_ativa
+  BEFORE INSERT OR UPDATE OF area_id ON categorias
+  FOR EACH ROW EXECUTE FUNCTION impedir_area_inativa();
