@@ -1,7 +1,7 @@
 -- ORB-55: catálogo de áreas de atendimento.
 CREATE TABLE areas_atendimento (
   id SERIAL PRIMARY KEY,
-  nome VARCHAR(60) NOT NULL UNIQUE,
+  nome VARCHAR(60) NOT NULL UNIQUE CHECK (length(trim(nome)) > 0),
   slug VARCHAR(60) NOT NULL UNIQUE CHECK (slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$'),
   ativo BOOLEAN NOT NULL DEFAULT TRUE,
   criado_em TIMESTAMPTZ NOT NULL DEFAULT NOW(),

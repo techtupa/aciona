@@ -1,6 +1,6 @@
 -- ORB-55: tabela areas_atendimento (estrutura, restrições e atualizado_em).
 BEGIN;
-SELECT plan(18);
+SELECT plan(20);
 
 SELECT has_table('areas_atendimento');
 SELECT col_is_pk('areas_atendimento', 'id');
@@ -36,7 +36,15 @@ SELECT throws_ok(
 );
 SELECT throws_ok(
   $$ INSERT INTO areas_atendimento (nome, slug) VALUES (NULL, 'sem-nome') $$,
-  '23502', NULL, 'nome vazio (nulo) é recusado'
+  '23502', NULL, 'nome nulo é recusado'
+);
+SELECT throws_ok(
+  $$ INSERT INTO areas_atendimento (nome, slug) VALUES ('', 'nome-vazio') $$,
+  '23514', NULL, 'nome vazio é recusado'
+);
+SELECT throws_ok(
+  $$ INSERT INTO areas_atendimento (nome, slug) VALUES ('   ', 'nome-so-espacos') $$,
+  '23514', NULL, 'nome só com espaços é recusado'
 );
 SELECT throws_ok(
   $$ INSERT INTO areas_atendimento (nome, slug) VALUES ('Slug ruim', 'Slug Ruim') $$,
