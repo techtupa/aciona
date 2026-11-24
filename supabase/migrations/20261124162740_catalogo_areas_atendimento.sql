@@ -13,3 +13,11 @@ CREATE TRIGGER trg_areas_atendimento_atualizado_em
   FOR EACH ROW EXECUTE FUNCTION marcar_atualizado_em();
 
 ALTER TABLE areas_atendimento ENABLE ROW LEVEL SECURITY;
+
+-- só leitura para quem está logado (síndico e morador); escrita só pelo acesso administrativo ao banco
+REVOKE ALL ON areas_atendimento FROM anon, authenticated;
+GRANT SELECT ON areas_atendimento TO authenticated;
+
+CREATE POLICY "areas_atendimento: ver todas" ON areas_atendimento
+  FOR SELECT TO authenticated
+  USING (true);
