@@ -35,3 +35,27 @@ INSERT INTO areas_atendimento (nome, slug) VALUES
   ('Convivência e administração', 'convivencia-e-administracao'),
   ('Geral e triagem',             'geral-e-triagem'),
   ('Gás e instalações',           'gas-e-instalacoes');
+
+-- Cada categoria pertence a uma área. A coluna nasce aceitando nulo para ser preenchida abaixo.
+ALTER TABLE categorias
+  ADD COLUMN area_id INT REFERENCES areas_atendimento (id) ON DELETE RESTRICT;
+
+UPDATE categorias c
+SET area_id = a.id
+FROM (VALUES
+  ('eletrica',   'eletrica'),
+  ('hidraulica', 'hidraulica'),
+  ('elevador',   'elevadores'),
+  ('estrutura',  'manutencao-predial'),
+  ('gas',        'gas-e-instalacoes'),
+  ('portaria',   'seguranca-e-acesso'),
+  ('seguranca',  'seguranca-e-acesso'),
+  ('limpeza',    'limpeza-e-conservacao'),
+  ('barulho',    'convivencia-e-administracao'),
+  ('garagem',    'convivencia-e-administracao'),
+  ('lazer',      'manutencao-predial'),
+  ('jardim',     'jardinagem-e-areas-externas'),
+  ('outros',     'geral-e-triagem')
+) AS m (categoria_slug, area_slug)
+JOIN areas_atendimento a ON a.slug = m.area_slug
+WHERE c.slug = m.categoria_slug;
