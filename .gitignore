@@ -3,4 +3,6 @@
 .env.*
 !.env.example
 
+# dependências e arquivos gerados no build
 node_modules/
+dist/
