@@ -4,6 +4,7 @@ import Input from '../components/Input'
 import Textarea from '../components/Textarea'
 import PageHeader from '../components/PageHeader'
 import CondominiumCard from '../components/CondominiumCard'
+import FeedbackMessage from '../components/FeedbackMessage'
 
 import { useState } from 'react'
 
@@ -48,21 +49,18 @@ function NovaOcorrencia() {
                 </p>
 
                 {showSuccess ? (
-                    <div className="success-message">
-                        <h3>Ocorrência registrada!</h3>
+                    <FeedbackMessage
+                        variant="success"
+                        title="Ocorrência registrada!"
+                    >
+                        <p>Seu relato foi recebido com sucesso.</p>
 
-                        <p>
-                            Seu relato foi recebido com sucesso.
-                        </p>
-
-                        <p>
-                            Número da ocorrência: DEMO-001
-                        </p>
+                        <p>Número da ocorrência: DEMO-001</p>
 
                         <small>
                             Confirmação demonstrativa — ainda sem gravação na API.
                         </small>
-                    </div>
+                    </FeedbackMessage>
                 ) : (
                     <form
                         className="occurrence-form"

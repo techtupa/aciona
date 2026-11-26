@@ -1,13 +1,14 @@
 .occurrence-page {
   width: 100%;
   min-height: 100vh;
-  padding: var(--spacing-16);
+  background-color: var(--color-primary-light);
 }
 
 .occurrence-content {
   width: 100%;
   max-width: 560px;
   margin: var(--spacing-32) auto;
+  text-align: center;
 }
 
 .occurrence-form {
@@ -15,6 +16,11 @@
   flex-direction: column;
   gap: var(--spacing-20);
   width: 100%;
+  margin-top: var(--spacing-20);
+  padding: var(--spacing-16);
+  background-color: var(--color-background);
+  border-radius: var(--radius-lg);
+  text-align: left;
 }
 
 .success-message {
@@ -43,4 +49,18 @@
   margin-top: var(--spacing-16);
   color: var(--color-success-muted);
   line-height: 1.5;
+}
+
+.occurrence-content h2 {
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+  margin-bottom: var(--spacing-12);
+}
+
+@media (max-width: 600px) {
+  .occurrence-content {
+    width: calc(100% - 32px);
+  }
 }

@@ -33,7 +33,11 @@ function Textarea({
       />
 
       {error && (
-        <span id={`${id}-error`} className="textarea-error">
+        <span
+          id={`${id}-error`}
+          className="textarea-error"
+          role="alert"
+        >
           {error}
         </span>
       )}

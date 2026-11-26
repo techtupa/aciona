@@ -35,7 +35,11 @@ function Input({
       />
 
       {error && (
-        <span id={`${id}-error`} className="input-error">
+        <span
+          id={`${id}-error`}
+          className="input-error"
+          role="alert"
+        >
           {error}
         </span>
       )}

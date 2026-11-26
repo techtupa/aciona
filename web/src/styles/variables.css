@@ -19,6 +19,16 @@
   --color-error-background: #FFF9F9;
   --color-focus: #79BDB0;
 
+    /* Status das ocorrências */
+  --color-status-registered: #1D4ED8;
+  --color-status-registered-background: #EFF6FF;
+
+  --color-status-progress: #92400E;
+  --color-status-progress-background: #FEF3C7;
+
+  --color-status-resolved: #166534;
+  --color-status-resolved-background: #DCFCE7;
+
 
   --color-success-border: #b7dfc5;
   --color-success-background: #f0faf3;

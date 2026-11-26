@@ -1,6 +1,6 @@
 
 import './PageHeader.css'
-import logoAciona from '../assets/logo-aciona.svg'
+import logoAciona from '../assets/logo-aciona.webp'
 
 function PageHeader({
     userRole = 'Morador',
