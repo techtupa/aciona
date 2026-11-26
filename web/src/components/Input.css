@@ -49,3 +49,34 @@
   line-height: 1.5;
   color: var(--color-error);
 }
+
+.input-field__control {
+  position: relative;
+  display: flex;
+}
+
+.input-field__control input {
+  padding-right: calc(40px + var(--spacing-12));
+}
+
+.input-field__control button {
+  position: absolute;
+  top: 50%;
+  right: var(--spacing-6);
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-primary);
+  cursor: pointer;
+}
+
+.input-field__control button:focus-visible {
+  outline: 2px solid var(--color-focus);
+}
