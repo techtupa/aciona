@@ -1,6 +1,6 @@
 
 import './PageHeader.css'
-import logoAciona from '../assets/logo-aciona.webp'
+import Brand from './Brand'
 
 function PageHeader({
     userRole = 'Morador',
@@ -8,15 +8,7 @@ function PageHeader({
 }) {
     return (
         <header className="page-header">
-            <div className="page-header__brand">
-                <img
-                    src={logoAciona}
-                    alt="Logo Aciona"
-                    className="page-header__logo"
-                />
-
-                <h1>Aciona</h1>
-            </div>
+            <Brand />
 
             <div className="page-header__user">
                 <span>{userRole}</span>
