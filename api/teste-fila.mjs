@@ -36,3 +36,10 @@ if (!fila.ok) {
   }
   if (corpo.total > 5) console.log(`  ... e mais ${corpo.total - 5}`);
 }
+
+// 4. Paginação: uma página do meio e uma depois da última
+for (const consulta of ['pagina=2&por_pagina=5', 'pagina=999']) {
+  const resposta = await fetch(`${api}/ocorrencias?condominio_id=${condominioId}&${consulta}`, { headers });
+  const dados = await resposta.json();
+  console.log(`Fila (${consulta}) →`, resposta.status, `| itens: ${dados.ocorrencias?.length} | total: ${dados.total}`);
+}

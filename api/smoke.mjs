@@ -70,4 +70,19 @@ assert.equal(filaCondominioInvalido.status, 400);
 const condominiosSemLogin = await request('/meus-condominios');
 assert.equal(condominiosSemLogin.status, 401);
 
+// ORB-27: paginação das listagens (validação, sem Supabase)
+const comToken = { headers: { Authorization: 'Bearer token-de-teste' } };
+
+const paginaZero = await request('/ocorrencias?condominio_id=1&pagina=0', 'GET', comToken);
+assert.equal(paginaZero.status, 400);
+assert.ok((await paginaZero.json()).campos.pagina);
+
+const porPaginaGrande = await request('/ocorrencias?condominio_id=1&por_pagina=101', 'GET', comToken);
+assert.equal(porPaginaGrande.status, 400);
+assert.ok((await porPaginaGrande.json()).campos.por_pagina);
+
+const paginaTexto = await request('/meus-condominios?pagina=abc', 'GET', comToken);
+assert.equal(paginaTexto.status, 400);
+assert.ok((await paginaTexto.json()).campos.pagina);
+
 console.log(`Aciona API OK em ${baseUrl} (${body.revision})`);
