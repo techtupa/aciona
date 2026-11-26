@@ -1,0 +1,46 @@
+name: aciona-api
+
+services:
+  api:
+    image: node:24.22.3-alpine@sha256:116b800c3754b440ee0aa3ed2f20f5bf3d99a554bfd9adeea09ea8017f6e85f5
+    user: "1000:1000"
+    command: ["node", "/app/server.mjs"]
+    environment:
+      ACIONA_REVISION: ${ACIONA_REVISION:?Use o SHA completo da revisão}
+    volumes:
+      - type: bind
+        source: /var/lib/aciona-api/releases/${ACIONA_REVISION}/server.mjs
+        target: /app/server.mjs
+        read_only: true
+        bind:
+          create_host_path: false
+    restart: unless-stopped
+    init: true
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 128m
+    pids_limit: 64
+    cpus: 0.5
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/health').then(r => { if (!r.ok) process.exit(1) }).catch(() => process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      start_period: 2s
+      retries: 5
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: aciona-api-ingress
+      traefik.http.routers.aciona-api.rule: "Host(`api-aciona.techtupa.com.br`)"
+      traefik.http.routers.aciona-api.entrypoints: websecure
+      traefik.http.routers.aciona-api.tls.certresolver: mytlschallenge
+      traefik.http.services.aciona-api.loadbalancer.server.port: "3000"
+    networks:
+      - proxy
+
+networks:
+  proxy:
+    external: true
+    name: aciona-api-ingress

@@ -1,8 +1,8 @@
-﻿# Environment variables
+# variáveis de ambiente com chaves e senhas (nunca vão para o Git)
 .env
 .env.*
 !.env.example
 
-# Local dependencies and build output
+# dependências e arquivos gerados no build
 node_modules/
 dist/
