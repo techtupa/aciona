@@ -1,29 +1,30 @@
 
 import './PageHeader.css'
-import logoAciona from '../assets/logo-aciona.webp'
+import { useNavigate } from 'react-router-dom'
+import { supabase } from '../lib/supabase'
+import Brand from './Brand'
 
 function PageHeader({
     userRole = 'Morador',
-    onLogout,
 }) {
+    const navigate = useNavigate()
+
+    // Encerra a sessão antes de voltar para o login.
+    async function sair() {
+        await supabase.auth.signOut({ scope: 'local' })
+        navigate('/login')
+    }
+
     return (
         <header className="page-header">
-            <div className="page-header__brand">
-                <img
-                    src={logoAciona}
-                    alt="Logo Aciona"
-                    className="page-header__logo"
-                />
-
-                <h1>Aciona</h1>
-            </div>
+            <Brand />
 
             <div className="page-header__user">
                 <span>{userRole}</span>
 
                 <button
                     type="button"
-                    onClick={onLogout}
+                    onClick={sair}
                 >
                     Sair
                 </button>
