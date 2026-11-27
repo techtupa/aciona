@@ -16,6 +16,29 @@ const LIMITE_CORPO = 16 * 1024; // 16 KB é bem mais do que um relato precisa
 const FORMATO_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const FORMATO_CATEGORIA = /^[a-z_]{1,30}$/;
 
+const POR_PAGINA_PADRAO = 20;
+const POR_PAGINA_MAXIMO = 100;
+
+// Lê ?pagina= e ?por_pagina= da URL. Sem eles, vale a primeira página com 20 itens.
+function lerPaginacao(parametros) {
+  const numero = (nome, padrao, formato) => {
+    const texto = parametros.get(nome);
+    if (texto === null) return padrao;
+    return formato.test(texto) ? Number(texto) : null;
+  };
+  const pagina = numero('pagina', 1, /^[1-9][0-9]{0,5}$/);
+  const porPagina = numero('por_pagina', POR_PAGINA_PADRAO, /^[1-9][0-9]{0,2}$/);
+
+  const campos = {};
+  if (pagina === null) campos.pagina = 'Use um número inteiro a partir de 1.';
+  if (porPagina === null || porPagina > POR_PAGINA_MAXIMO) {
+    campos.por_pagina = `Use um número de 1 a ${POR_PAGINA_MAXIMO}.`;
+  }
+  if (Object.keys(campos).length > 0) return { campos };
+
+  return { pagina, porPagina, intervalo: `&limit=${porPagina}&offset=${(pagina - 1) * porPagina}` };
+}
+
 function cabecalhosCors(request) {
   const origin = request.headers.origin;
   if (!origin || origin !== origemPermitida) return {};
@@ -111,10 +134,133 @@ function traduzirErroDoBanco(status, erro) {
   return [503, { error: 'falha_gravacao', mensagem: 'Não foi possível salvar agora. Tente de novo.', recuperavel: true }];
 }
 
+// Lê o token da sessão (Supabase Auth) enviado pelo frontend.
+function lerToken(request) {
+  const autorizacao = request.headers.authorization ?? '';
+  return autorizacao.startsWith('Bearer ') ? autorizacao.slice(7).trim() : '';
+}
+
+// O total vem no cabeçalho Content-Range: "0-19/359" quer dizer itens 0 a 19 de 359.
+function lerTotal(resposta) {
+  const total = Number(resposta.headers.get('content-range')?.split('/')[1]);
+  return Number.isInteger(total) ? total : null;
+}
+
+// Consulta a API REST do Supabase NO NOME da pessoa (a RLS filtra o que ela pode ver).
+// Devolve { dados, total } ou { erro: [status, corpo] } pronto para responder. O total só vem quando contar é true.
+async function consultarSupabase(caminho, token, { contar = false } = {}) {
+  if (!supabaseUrl || !supabaseKey) {
+    console.error('SUPABASE_URL ou SUPABASE_PUBLISHABLE_KEY não configurados');
+    return { erro: [503, { error: 'falha_consulta', mensagem: 'Não foi possível carregar agora. Tente de novo.', recuperavel: true }] };
+  }
+  let resposta;
+  try {
+    resposta = await fetch(`${supabaseUrl}/rest/v1/${caminho}`, {
+      headers: {
+        apikey: supabaseKey,
+        Authorization: `Bearer ${token}`,
+        ...(contar ? { Prefer: 'count=exact' } : {}),
+      },
+      signal: AbortSignal.timeout(8000),
+    });
+  } catch (erro) {
+    console.error('Falha ao falar com o Supabase:', erro.message);
+    return { erro: [503, { error: 'falha_consulta', mensagem: 'Não foi possível carregar agora. Tente de novo.', recuperavel: true }] };
+  }
+  const corpo = await resposta.json().catch(() => null);
+  if (resposta.status === 401 || corpo?.code === 'PGRST301' || corpo?.code === 'PGRST303') {
+    return { erro: [401, { error: 'sessao_invalida', mensagem: 'Sua sessão expirou. Entre de novo.' }] };
+  }
+  // Página depois da última: o Supabase responde 416 (PGRST103). Para quem chama, é só uma página vazia.
+  if (contar && corpo?.code === 'PGRST103') {
+    return { dados: [], total: lerTotal(resposta) };
+  }
+  if (!resposta.ok || !Array.isArray(corpo)) {
+    console.error('Erro do banco ao consultar:', resposta.status, corpo);
+    return { erro: [503, { error: 'falha_consulta', mensagem: 'Não foi possível carregar agora. Tente de novo.', recuperavel: true }] };
+  }
+  return { dados: corpo, total: lerTotal(resposta) };
+}
+
+// ORB-27: GET /meus-condominios — os condomínios da pessoa logada e o papel dela em cada um.
+// O frontend usa para preencher o condominio_id (formulário) e o seletor do topo (fila).
+async function listarMeusCondominios(request, response, cors, parametros) {
+  const token = lerToken(request);
+  if (!token) {
+    sendJson(response, 401, { error: 'nao_autenticado', mensagem: 'Entre na sua conta.' }, cors);
+    return;
+  }
+  const paginacao = lerPaginacao(parametros);
+  if (paginacao.campos) {
+    sendJson(response, 400, { error: 'dados_invalidos', campos: paginacao.campos }, cors);
+    return;
+  }
+  const { dados, total, erro } = await consultarSupabase(
+    'vinculos?select=papel,condominios(id,nome,sigla)&order=condominio_id' + paginacao.intervalo,
+    token, { contar: true });
+  if (erro) {
+    sendJson(response, erro[0], erro[1], cors);
+    return;
+  }
+  const condominios = dados
+    .filter((v) => v.condominios)
+    .map((v) => ({ id: v.condominios.id, nome: v.condominios.nome, sigla: v.condominios.sigla, papel: v.papel }));
+  sendJson(response, 200, { pagina: paginacao.pagina, por_pagina: paginacao.porPagina, total, condominios }, cors);
+}
+
+// ORB-27: GET /ocorrencias?condominio_id=1 — a fila do condomínio, mais recentes primeiro.
+// Síndico recebe a fila inteira; morador recebe só os chamados dele (regra do ORB-18, na RLS).
+async function listarOcorrencias(request, response, cors, parametros) {
+  const token = lerToken(request);
+  if (!token) {
+    sendJson(response, 401, { error: 'nao_autenticado', mensagem: 'Entre na sua conta.' }, cors);
+    return;
+  }
+  const texto = parametros.get('condominio_id') ?? '';
+  const condominioId = /^[1-9][0-9]{0,8}$/.test(texto) ? Number(texto) : null;
+  if (!condominioId) {
+    sendJson(response, 400, { error: 'dados_invalidos', campos: { condominio_id: 'Informe o condomínio.' } }, cors);
+    return;
+  }
+  const paginacao = lerPaginacao(parametros);
+  if (paginacao.campos) {
+    sendJson(response, 400, { error: 'dados_invalidos', campos: paginacao.campos }, cors);
+    return;
+  }
+
+  // 1. A pessoa tem vínculo com esse condomínio? (a RLS só mostra os vínculos dela)
+  const vinculo = await consultarSupabase(`vinculos?select=papel&condominio_id=eq.${condominioId}`, token);
+  if (vinculo.erro) {
+    sendJson(response, vinculo.erro[0], vinculo.erro[1], cors);
+    return;
+  }
+  if (vinculo.dados.length === 0) {
+    sendJson(response, 403, { error: 'sem_acesso', mensagem: 'Sua conta não tem acesso a este condomínio.' }, cors);
+    return;
+  }
+
+  // 2. A fila, pela view do ORB-25 (security_invoker: a RLS vale aqui também)
+  const fila = await consultarSupabase(
+    `fila_ocorrencias?select=numero,categoria,local,resumo,status,origem,criado_em`
+      + `&condominio_id=eq.${condominioId}&order=criado_em.desc,id.desc` + paginacao.intervalo,
+    token, { contar: true });
+  if (fila.erro) {
+    sendJson(response, fila.erro[0], fila.erro[1], cors);
+    return;
+  }
+  sendJson(response, 200, {
+    condominio_id: condominioId,
+    papel: vinculo.dados[0].papel,
+    pagina: paginacao.pagina,
+    por_pagina: paginacao.porPagina,
+    total: fila.total,
+    ocorrencias: fila.dados,
+  }, cors);
+}
+
 async function registrarOcorrencia(request, response, cors) {
   // 1. Quem está enviando? (sessão do Supabase Auth, enviada pelo frontend)
-  const autorizacao = request.headers.authorization ?? '';
-  const token = autorizacao.startsWith('Bearer ') ? autorizacao.slice(7).trim() : '';
+  const token = lerToken(request);
   if (!token) {
     sendJson(response, 401, { error: 'nao_autenticado', mensagem: 'Entre na sua conta para registrar.' }, cors);
     return;
@@ -176,7 +322,8 @@ async function registrarOcorrencia(request, response, cors) {
 }
 
 const server = createServer(async (request, response) => {
-  const path = request.url?.split('?', 1)[0];
+  const url = new URL(request.url ?? '/', 'http://localhost');
+  const path = url.pathname;
   const cors = cabecalhosCors(request);
 
   if (path === '/health') {
@@ -188,16 +335,49 @@ const server = createServer(async (request, response) => {
     return;
   }
 
-  if (path === '/ocorrencias') {
+  if (path === '/meus-condominios') {
     if (request.method === 'OPTIONS') {
-      // "pré-voo" do navegador antes do POST vindo de outro endereço
       response.writeHead(204, {
         ...cors,
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Methods': 'GET, OPTIONS',
         'Access-Control-Allow-Headers': 'Authorization, Content-Type',
         'Access-Control-Max-Age': '600',
       });
       response.end();
+      return;
+    }
+    if (request.method === 'GET') {
+      try {
+        await listarMeusCondominios(request, response, cors, url.searchParams);
+      } catch (erro) {
+        console.error('Erro inesperado:', erro);
+        if (!response.headersSent) sendJson(response, 500, { error: 'erro_interno', recuperavel: true }, cors);
+      }
+      return;
+    }
+    sendJson(response, 405, { error: 'method_not_allowed' }, { Allow: 'GET, OPTIONS', ...cors });
+    return;
+  }
+
+  if (path === '/ocorrencias') {
+    if (request.method === 'OPTIONS') {
+      // "pré-voo" do navegador antes do GET/POST vindo de outro endereço
+      response.writeHead(204, {
+        ...cors,
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Authorization, Content-Type',
+        'Access-Control-Max-Age': '600',
+      });
+      response.end();
+      return;
+    }
+    if (request.method === 'GET') {
+      try {
+        await listarOcorrencias(request, response, cors, url.searchParams);
+      } catch (erro) {
+        console.error('Erro inesperado:', erro);
+        if (!response.headersSent) sendJson(response, 500, { error: 'erro_interno', recuperavel: true }, cors);
+      }
       return;
     }
     if (request.method === 'POST') {
@@ -211,7 +391,7 @@ const server = createServer(async (request, response) => {
       }
       return;
     }
-    sendJson(response, 405, { error: 'method_not_allowed' }, { Allow: 'POST, OPTIONS', ...cors });
+    sendJson(response, 405, { error: 'method_not_allowed' }, { Allow: 'GET, POST, OPTIONS', ...cors });
     return;
   }
 
