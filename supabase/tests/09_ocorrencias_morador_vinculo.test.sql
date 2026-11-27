@@ -1,11 +1,13 @@
--- ORB-18: o morador só lê os próprios relatos enquanto tiver vínculo; o síndico segue com a fila dele.
+-- ORB-18: o morador só lê os próprios relatos enquanto tiver vínculo; o síndico segue com a fila dele;
+-- quem nunca teve vínculo não lê nem registra.
 BEGIN;
-SELECT plan(6);
+SELECT plan(10);
 
 -- contas e vínculos só deste teste (os condomínios Vista e Aurora vêm do seed)
 INSERT INTO auth.users (id) VALUES
   ('00000000-0000-0000-0000-000000000901'),
-  ('00000000-0000-0000-0000-000000000902');
+  ('00000000-0000-0000-0000-000000000902'),
+  ('00000000-0000-0000-0000-000000000903');
 
 -- ids guardados antes de trocar de role: sem vínculo, a RLS esconde o condomínio
 SELECT set_config('teste.vista', id::text, TRUE) FROM condominios WHERE nome = 'Vista';
@@ -64,6 +66,29 @@ SELECT is(
   (SELECT count(*) FROM ocorrencias WHERE condominio_id = current_setting('teste.aurora')::int),
   0::bigint,
   'o síndico do Vista não vê nada do Aurora'
+);
+
+-- conta que nunca teve vínculo
+SET LOCAL request.jwt.claims = '{"sub":"00000000-0000-0000-0000-000000000903","role":"authenticated"}';
+SELECT is(
+  (SELECT count(*) FROM ocorrencias WHERE condominio_id = current_setting('teste.vista')::int),
+  0::bigint,
+  'a conta sem vínculo não lê nada do Vista'
+);
+SELECT is(
+  (SELECT count(*) FROM ocorrencias WHERE condominio_id = current_setting('teste.aurora')::int),
+  0::bigint,
+  'a conta sem vínculo não lê nada do Aurora'
+);
+SELECT throws_ok(
+  $$ SELECT * FROM registrar_ocorrencia(
+       current_setting('teste.vista')::int, 'Portaria', 'Relato sem vínculo') $$,
+  '42501', NULL, 'a conta sem vínculo não registra no Vista'
+);
+SELECT throws_ok(
+  $$ SELECT * FROM registrar_ocorrencia(
+       current_setting('teste.aurora')::int, 'Portaria', 'Relato sem vínculo') $$,
+  '42501', NULL, 'a conta sem vínculo não registra no Aurora'
 );
 
 RESET ROLE;
