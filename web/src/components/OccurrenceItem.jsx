@@ -1,4 +1,3 @@
-
 import StatusBadge from './StatusBadge'
 import './OccurrenceItem.css'
 import { MapPin } from 'lucide-react'
@@ -6,7 +5,7 @@ import { MapPin } from 'lucide-react'
 function OccurrenceItem({ occurrence }) {
     const statusLabels = {
         registered: 'Registrada',
-        progress: 'Em andamento',
+        progress: 'Em atendimento',
         resolved: 'Resolvida',
     }
 

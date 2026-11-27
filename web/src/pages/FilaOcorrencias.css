@@ -50,6 +50,11 @@
     color: var(--color-primary);
 }
 
+.occurrence-queue__count {
+    margin-left: auto;
+    color: var(--color-text-secondary);
+}
+
 .occurrence-queue__list {
     display: flex;
     flex-direction: column;

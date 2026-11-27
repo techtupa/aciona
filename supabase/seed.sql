@@ -143,7 +143,8 @@ ORDER BY idade DESC
 ON CONFLICT (id_solicitacao) DO NOTHING;
 
 -- ORB-18: contas de teste (SÓ no Supabase local; senha fictícia para todas: Teste@1234)
--- morador e síndico do Vista, morador e síndico do Aurora e uma conta sem vínculo
+-- morador e síndico do Vista (o síndico do Vista também administra o Aurora),
+-- morador e síndico do Aurora e uma conta sem vínculo
 WITH contas (id, email) AS (VALUES
   ('00000000-0000-0000-0000-0000000000a1'::uuid, 'morador.vista@teste.local'),
   ('00000000-0000-0000-0000-0000000000a2'::uuid, 'sindico.vista@teste.local'),
@@ -179,6 +180,7 @@ SELECT v.usuario_id, c.id, v.papel
 FROM (VALUES
   ('00000000-0000-0000-0000-0000000000a1'::uuid, 'Vista',  'morador'),
   ('00000000-0000-0000-0000-0000000000a2'::uuid, 'Vista',  'sindico'),
+  ('00000000-0000-0000-0000-0000000000a2'::uuid, 'Aurora', 'sindico'),
   ('00000000-0000-0000-0000-0000000000a3'::uuid, 'Aurora', 'morador'),
   ('00000000-0000-0000-0000-0000000000a4'::uuid, 'Aurora', 'sindico')
 ) AS v (usuario_id, condominio, papel)
