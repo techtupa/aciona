@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react'
 import { Navigate, useSearchParams } from 'react-router-dom'
 import PageHeader from '../components/PageHeader'
@@ -112,7 +111,9 @@ function FilaOcorrencias() {
         if (items.length === 0) {
             return (
                 <p className="occurrence-queue__empty">
-                    Não há ocorrências registradas neste condomínio.
+                    Nenhuma ocorrência registrada
+                    <br />
+                    Os novos relatos deste condomínio vão aparecer aqui.
                 </p>
             )
         }
