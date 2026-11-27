@@ -38,15 +38,21 @@ const errorMessage = (
     </p>
 )
 
-// Devolve { items, total } quando a página chega, ou só { status } quando a busca falha.
+// Devolve { items, total, perPage } quando a página chega, ou só { status } quando a busca falha.
 async function fetchPage(condominiumId, page) {
     const response = await buscarOcorrencias(await lerToken(), condominiumId, page)
     const items = response.dados?.ocorrencias
     const total = response.dados?.total
-    if (!response.ok || !Array.isArray(items) || !Number.isInteger(total)) {
+    const perPage = response.dados?.por_pagina
+    if (
+        !response.ok ||
+        !Array.isArray(items) ||
+        !Number.isInteger(total) ||
+        !Number.isInteger(perPage)
+    ) {
         return { status: response.status }
     }
-    return { items: items.map(toOccurrence), total }
+    return { items: items.map(toOccurrence), total, perPage }
 }
 
 // Fila de um condomínio. Quem usa passa o id como key: ao trocar de condomínio, a fila
@@ -81,7 +87,7 @@ function CondominiumQueue({ condominium }) {
         // Um relato novo empurra os antigos para a página seguinte: não repete os já carregados.
         const loadedIds = new Set(queue.items.map((occurrence) => occurrence.id))
         const newItems = result.items.filter((occurrence) => !loadedIds.has(occurrence.id))
-        setQueue({ items: [...queue.items, ...newItems], total: result.total, page })
+        setQueue({ ...result, items: [...queue.items, ...newItems], page })
     }
 
     if (failure?.status === 401) {
@@ -125,7 +131,7 @@ function CondominiumQueue({ condominium }) {
 
             {queue && failure && errorMessage}
 
-            {queue && queue.items.length < queue.total && (
+            {queue && queue.page * queue.perPage < queue.total && (
                 <Button variant="secondary" onClick={loadMore} disabled={loadingMore}>
                     {loadingMore ? 'Carregando…' : 'Mostrar mais ocorrências'}
                 </Button>
