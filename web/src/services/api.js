@@ -23,3 +23,8 @@ export async function chamarApi(caminho, token, opcoes = {}) {
 export function buscarMeusCondominios(token) {
   return chamarApi('/meus-condominios', token)
 }
+
+// GET /ocorrencias: a fila de um condomínio, das mais recentes para as mais antigas.
+export function buscarOcorrencias(token, condominioId) {
+  return chamarApi(`/ocorrencias?condominio_id=${condominioId}`, token)
+}
