@@ -85,4 +85,13 @@ const paginaTexto = await request('/meus-condominios?pagina=abc', 'GET', comToke
 assert.equal(paginaTexto.status, 400);
 assert.ok((await paginaTexto.json()).campos.pagina);
 
+// ORB-55: GET /areas (testes que não precisam do Supabase)
+const areasSemLogin = await request('/areas');
+assert.equal(areasSemLogin.status, 401);
+assert.equal((await areasSemLogin.json()).error, 'nao_autenticado');
+
+const areasMetodoErrado = await request('/areas', 'POST');
+assert.equal(areasMetodoErrado.status, 405);
+assert.equal(areasMetodoErrado.headers.get('allow'), 'GET, OPTIONS');
+
 console.log(`Aciona API OK em ${baseUrl} (${body.revision})`);
