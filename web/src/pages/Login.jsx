@@ -87,7 +87,7 @@ function Login() {
     // mesmo depois de recarregar. O síndico começa pelo primeiro condomínio que administra.
     const doSindico = condominios.find((c) => c.papel === 'sindico')
     const inicial = doSindico ?? condominios[0]
-    const destino = doSindico ? '/fila' : '/ocorrencias/nova'
+    const destino = doSindico ? '/ocorrencias/fila' : '/ocorrencias/nova'
     navigate(`${destino}?condominio=${inicial.id}`)
   }
 
