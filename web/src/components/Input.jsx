@@ -12,27 +12,39 @@ function Input({
   required = false,
   error,
   autoComplete,
+  adornment,
   ...props
 }) {
+  const input = (
+    <input
+      id={id}
+      type={type}
+      name={name}
+      placeholder={placeholder}
+      value={value}
+      onChange={onChange}
+      required={required}
+      autoComplete={autoComplete}
+      aria-invalid={Boolean(error)}
+      aria-describedby={error ? `${id}-error` : undefined}
+      {...props}
+    />
+  )
+
   return (
     <div className="input-field">
       <label htmlFor={id}>
         {label}
       </label>
 
-      <input
-        id={id}
-        type={type}
-        name={name}
-        placeholder={placeholder}
-        value={value}
-        onChange={onChange}
-        required={required}
-        autoComplete={autoComplete}
-        aria-invalid={Boolean(error)}
-        aria-describedby={error ? `${id}-error` : undefined}
-        {...props}
-      />
+      {adornment ? (
+        <div className="input-field__control">
+          {input}
+          {adornment}
+        </div>
+      ) : (
+        input
+      )}
 
       {error && (
         <span
