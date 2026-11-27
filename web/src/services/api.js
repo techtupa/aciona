@@ -23,3 +23,17 @@ export async function chamarApi(caminho, token, opcoes = {}) {
 export function buscarMeusCondominios(token) {
   return chamarApi('/meus-condominios', token)
 }
+
+// POST /ocorrencias: grava uma nova ocorrência.
+// Em repetição com o mesmo id_solicitacao, a API devolve 200 com { numero, ja_existia: true }.
+export function criarOcorrencia(token, { condominio_id, local, descricao, id_solicitacao }) {
+  return chamarApi('/ocorrencias', token, {
+    method: 'POST',
+    body: JSON.stringify({
+      condominio_id: Number(condominio_id),
+      local,
+      descricao,
+      id_solicitacao,
+    }),
+  })
+}

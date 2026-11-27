@@ -59,6 +59,32 @@
   margin-bottom: var(--spacing-12);
 }
 
+.occurrence-status {
+  width: 100%;
+  margin-top: var(--spacing-20);
+  padding: var(--spacing-24);
+  box-sizing: border-box;
+  background-color: var(--color-background);
+  border-radius: var(--radius-lg);
+  color: var(--color-text-secondary);
+}
+
+.occurrence-form .feedback-message {
+  margin-top: 0;
+  padding: var(--spacing-16);
+  text-align: left;
+}
+
+.occurrence-number {
+  margin-top: var(--spacing-8);
+  font-size: 18px;
+  color: var(--color-success-text);
+}
+
+.occurrence-feedback-actions {
+  margin-top: var(--spacing-16);
+}
+
 @media (max-width: 600px) {
   .occurrence-content {
     width: calc(100% - 32px);
