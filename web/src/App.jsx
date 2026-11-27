@@ -17,7 +17,10 @@ function App() {
           path="/ocorrencias/nova"
           element={<RotaProtegida><NovaOcorrencia /></RotaProtegida>}
         />
-        <Route path="/ocorrencias/fila" element={<FilaOcorrencias />} />
+        <Route
+          path="/ocorrencias/fila"
+          element={<RotaProtegida><FilaOcorrencias /></RotaProtegida>}
+        />
       </Routes>
     </BrowserRouter>
   )
