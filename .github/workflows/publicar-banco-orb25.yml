@@ -1,0 +1,36 @@
+name: Publicar banco ORB-25
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: aciona-db-orb25
+  cancel-in-progress: false
+
+jobs:
+  publicar:
+    if: github.ref == 'refs/heads/main'
+    environment: aciona-db
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - name: Instalar Supabase CLI 2.122.0
+        shell: bash
+        run: |
+          cd "$RUNNER_TEMP"
+          curl -fsSL --retry 2 -o supabase.tar.gz https://github.com/supabase/cli/releases/download/v2.122.0/supabase_linux_amd64.tar.gz
+          echo '59ed066847b98d7461c60e9109d40cab6b9756177ce06ebb05b51338519f5136  supabase.tar.gz' | sha256sum --check
+          tar -xzf supabase.tar.gz supabase
+          echo "$RUNNER_TEMP" >> "$GITHUB_PATH"
+      - name: Simular, publicar e verificar o banco
+        shell: bash
+        env:
+          DATABASE_URL: ${{ secrets.ACIONA_ORB25_DB_URL }}
+          ACIONA_PRODUCTION: '1'
+        run: bash .github/aciona/orb25/publicar.sh
