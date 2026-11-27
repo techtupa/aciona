@@ -25,6 +25,7 @@ export function buscarMeusCondominios(token) {
 }
 
 // GET /ocorrencias: a fila de um condomínio, das mais recentes para as mais antigas.
-export function buscarOcorrencias(token, condominioId) {
-  return chamarApi(`/ocorrencias?condominio_id=${condominioId}`, token)
+// Cada página traz até 20.
+export function buscarOcorrencias(token, condominioId, pagina = 1) {
+  return chamarApi(`/ocorrencias?condominio_id=${condominioId}&pagina=${pagina}`, token)
 }

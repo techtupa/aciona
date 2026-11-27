@@ -3,6 +3,7 @@ import { Navigate, useSearchParams } from 'react-router-dom'
 import PageHeader from '../components/PageHeader'
 import CondominiumSelector from '../components/CondominiumSelector'
 import OccurrenceItem from '../components/OccurrenceItem'
+import Button from '../components/Button'
 import { lerToken } from '../lib/supabase'
 import { buscarMeusCondominios, buscarOcorrencias } from '../services/api'
 import './FilaOcorrencias.css'
@@ -37,10 +38,105 @@ const errorMessage = (
     </p>
 )
 
+// Devolve { items, total } quando a página chega, ou só { status } quando a busca falha.
+async function fetchPage(condominiumId, page) {
+    const response = await buscarOcorrencias(await lerToken(), condominiumId, page)
+    const items = response.dados?.ocorrencias
+    const total = response.dados?.total
+    if (!response.ok || !Array.isArray(items) || !Number.isInteger(total)) {
+        return { status: response.status }
+    }
+    return { items: items.map(toOccurrence), total }
+}
+
+// Fila de um condomínio. Quem usa passa o id como key: ao trocar de condomínio, a fila
+// recomeça da primeira página e as respostas do anterior são descartadas.
+function CondominiumQueue({ condominium }) {
+    const [queue, setQueue] = useState(null)
+    const [failure, setFailure] = useState(null)
+    const [loadingMore, setLoadingMore] = useState(false)
+
+    useEffect(() => {
+        let active = true
+        fetchPage(condominium.id, 1).then((result) => {
+            if (!active) return
+            if (result.items) setQueue({ ...result, page: 1 })
+            else setFailure(result)
+        })
+        return () => {
+            active = false
+        }
+    }, [condominium.id])
+
+    async function loadMore() {
+        setLoadingMore(true)
+        setFailure(null)
+        const page = queue.page + 1
+        const result = await fetchPage(condominium.id, page)
+        setLoadingMore(false)
+        if (!result.items) {
+            setFailure(result)
+            return
+        }
+        // Um relato novo empurra os antigos para a página seguinte: não repete os já carregados.
+        const loadedIds = new Set(queue.items.map((occurrence) => occurrence.id))
+        const newItems = result.items.filter((occurrence) => !loadedIds.has(occurrence.id))
+        setQueue({ items: [...queue.items, ...newItems], total: result.total, page })
+    }
+
+    if (failure?.status === 401) {
+        return <Navigate to="/login" replace />
+    }
+
+    function renderOccurrences() {
+        if (!queue) return failure ? errorMessage : loadingMessage
+
+        if (queue.items.length === 0) {
+            return (
+                <p className="occurrence-queue__empty">
+                    Nenhuma ocorrência registrada
+                    <br />
+                    Os novos relatos deste condomínio vão aparecer aqui.
+                </p>
+            )
+        }
+
+        return queue.items.map((occurrence) => (
+            <OccurrenceItem
+                key={occurrence.id}
+                occurrence={occurrence}
+            />
+        ))
+    }
+
+    return (
+        <>
+            <div className="occurrence-queue__active">
+                <span>Condomínio ativo:</span>
+                <strong>{condominium.name}</strong>
+                <span className="occurrence-queue__count" role="status">
+                    {queue && (queue.total === 1 ? '1 ocorrência' : `${queue.total} ocorrências`)}
+                </span>
+            </div>
+
+            <div className="occurrence-queue__list">
+                {renderOccurrences()}
+            </div>
+
+            {queue && failure && errorMessage}
+
+            {queue && queue.items.length < queue.total && (
+                <Button variant="secondary" onClick={loadMore} disabled={loadingMore}>
+                    {loadingMore ? 'Carregando…' : 'Mostrar mais ocorrências'}
+                </Button>
+            )}
+        </>
+    )
+}
+
 function FilaOcorrencias() {
     const [searchParams, setSearchParams] = useSearchParams()
     const [condominiumsResponse, setCondominiumsResponse] = useState(null)
-    const [queueResult, setQueueResult] = useState(null)
 
     useEffect(() => {
         let active = true
@@ -78,52 +174,11 @@ function FilaOcorrencias() {
         }
     }, [selectedId, requestedId, setSearchParams])
 
-    useEffect(() => {
-        if (!selectedId) return undefined
-        let active = true
-        lerToken()
-            .then((token) => buscarOcorrencias(token, selectedId))
-            .then((response) => {
-                if (active) setQueueResult({ condominiumId: selectedId, response })
-            })
-        return () => {
-            active = false
-        }
-    }, [selectedId])
-
-    // Uma resposta de outro condomínio não vale para o que está ativo agora.
-    const queueResponse =
-        queueResult?.condominiumId === selectedId ? queueResult?.response : null
-
-    if (condominiumsResponse?.status === 401 || queueResponse?.status === 401) {
+    if (condominiumsResponse?.status === 401) {
         return <Navigate to="/login" replace />
     }
     if (condominiums?.length === 0) {
         return <Navigate to="/ocorrencias/nova" replace />
-    }
-
-    function renderOccurrences() {
-        if (!queueResponse) return loadingMessage
-
-        const items = queueResponse.dados?.ocorrencias
-        if (!queueResponse.ok || !Array.isArray(items)) return errorMessage
-
-        if (items.length === 0) {
-            return (
-                <p className="occurrence-queue__empty">
-                    Nenhuma ocorrência registrada
-                    <br />
-                    Os novos relatos deste condomínio vão aparecer aqui.
-                </p>
-            )
-        }
-
-        return items.map(toOccurrence).map((occurrence) => (
-            <OccurrenceItem
-                key={occurrence.id}
-                occurrence={occurrence}
-            />
-        ))
     }
 
     return (
@@ -147,14 +202,10 @@ function FilaOcorrencias() {
                                 onChange={(id) => setSearchParams({ condominio: id })}
                             />
 
-                            <div className="occurrence-queue__active">
-                                <span>Condomínio ativo:</span>
-                                <strong>{selectedCondominium.name}</strong>
-                            </div>
-
-                            <div className="occurrence-queue__list">
-                                {renderOccurrences()}
-                            </div>
+                            <CondominiumQueue
+                                key={selectedId}
+                                condominium={selectedCondominium}
+                            />
                         </>
                     ) : (
                         condominiumsResponse ? errorMessage : loadingMessage
