@@ -24,6 +24,20 @@ export function buscarMeusCondominios(token) {
   return chamarApi('/meus-condominios', token)
 }
 
+// POST /ocorrencias: grava uma nova ocorrência.
+// Em repetição com o mesmo id_solicitacao, a API devolve 200 com { numero, ja_existia: true }.
+export function criarOcorrencia(token, { condominio_id, local, descricao, id_solicitacao }) {
+  return chamarApi('/ocorrencias', token, {
+    method: 'POST',
+    body: JSON.stringify({
+      condominio_id: Number(condominio_id),
+      local,
+      descricao,
+      id_solicitacao,
+    }),
+  })
+}
+
 // GET /ocorrencias: a fila de um condomínio, das mais recentes para as mais antigas.
 // Cada página traz até 20.
 export function buscarOcorrencias(token, condominioId, pagina = 1) {
