@@ -1,25 +1,26 @@
-
 :root {
+  /* Cores principais */
+  --color-primary: #07575A;
+  --color-primary-hover: #06474A;
+  --color-primary-light: #DFF4ED;
+  --color-canvas: #EAF6F1;
 
-  --color-primary: #075D5B;
-  --color-primary-hover: #064B49;
-  --color-primary-light: #E5F4EF;
-
-
-  --color-text-primary: #263B3A;
-  --color-text-secondary: #667875;
+  /* Textos */
+  --color-text-primary: #152B2B;
+  --color-text-secondary: #4B625F;
   --color-text-placeholder: #899694;
 
-
+  /* Fundos e bordas */
   --color-background: #FFFFFF;
-  --color-border: #D5DEDC;
+  --color-border: #D2DFDA;
+  --color-control-border: #708C83;
 
-
-  --color-error: #C0392B;
+  /* Erros e foco */
+  --color-error: #A52F36;
   --color-error-background: #FFF9F9;
-  --color-focus: #79BDB0;
+  --color-focus: #126C60;
 
-    /* Status das ocorrências */
+  /* Status das ocorrências */
   --color-status-registered: #1D4ED8;
   --color-status-registered-background: #EFF6FF;
 
@@ -29,18 +30,20 @@
   --color-status-resolved: #166534;
   --color-status-resolved-background: #DCFCE7;
 
-
+  /* Sucesso */
   --color-success-border: #b7dfc5;
   --color-success-background: #f0faf3;
   --color-success-text: #246b3b;
   --color-success-body: #333;
   --color-success-muted: #666;
 
-
-  --radius-sm: 6px;
+  /* Bordas arredondadas */
+  --radius-sm: 10px;
   --radius-md: 8px;
-  --radius-lg: 12px;
+  --radius-lg: 18px;
 
+  /* Espaçamentos */
+  --spacing-4: 4px;
   --spacing-6: 6px;
   --spacing-8: 8px;
   --spacing-10: 10px;
@@ -49,4 +52,6 @@
   --spacing-20: 20px;
   --spacing-24: 24px;
   --spacing-32: 32px;
+  --spacing-48: 48px;
+  --spacing-64: 64px;
 }
