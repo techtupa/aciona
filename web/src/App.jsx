@@ -4,6 +4,7 @@ import RotaProtegida from './components/RotaProtegida'
 import Login from './pages/Login'
 import Home from './pages/Home'
 import NovaOcorrencia from './pages/NovaOcorrencia'
+import FilaOcorrencias from './pages/FilaOcorrencias'
 
 function App() {
   return (
@@ -15,6 +16,10 @@ function App() {
         <Route
           path="/ocorrencias/nova"
           element={<RotaProtegida><NovaOcorrencia /></RotaProtegida>}
+        />
+        <Route
+          path="/ocorrencias/fila"
+          element={<RotaProtegida><FilaOcorrencias /></RotaProtegida>}
         />
       </Routes>
     </BrowserRouter>

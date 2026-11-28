@@ -20,6 +20,31 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
+      - name: Instalar a CLI do Supabase
+        run: npm exec --yes --package=supabase@2.122.0 -- supabase --version
+      - name: Aplicar migrations do Aciona
+        shell: bash
+        env:
+          ACIONA_SUPABASE_DB_URL: ${{ secrets.ACIONASUPABASEDB_URL }}
+        run: |
+          set -euo pipefail
+          if [[ -z "$ACIONA_SUPABASE_DB_URL" ]]; then
+            echo 'Configure ACIONASUPABASEDB_URL no ambiente aciona-api.' >&2
+            exit 1
+          fi
+          if ! compgen -G 'supabase/migrations/*.sql' > /dev/null; then
+            echo 'Esta revisão não contém migrations do Aciona.' >&2
+            exit 1
+          fi
+          release_sha=$(git ls-remote --exit-code origin refs/heads/deploy/aciona-api | cut -f1)
+          if [[ "$release_sha" != "$GITHUB_SHA" ]]; then
+            echo 'Esta revisão já foi substituída na branch de publicação.' >&2
+            exit 1
+          fi
+          npm exec --yes --package=supabase@2.122.0 -- supabase db push \
+            --db-url "$ACIONA_SUPABASE_DB_URL" --skip-vault --dry-run --yes
+          npm exec --yes --package=supabase@2.122.0 -- supabase db push \
+            --db-url "$ACIONA_SUPABASE_DB_URL" --skip-vault --yes
       - name: Publicar pelo acesso restrito da API
         shell: bash
         env:
@@ -38,3 +63,5 @@ jobs:
             aciona-deploy@api-aciona.techtupa.com.br "deploy $GITHUB_SHA"
       - name: Verificar a revisão pública
         run: node api/smoke.mjs https://api-aciona.techtupa.com.br "$GITHUB_SHA"
+      - name: Verificar a origem do frontend publicado
+        run: node api/verificar-cors.mjs https://api-aciona.techtupa.com.br https://aciona.techtupa.com.br
