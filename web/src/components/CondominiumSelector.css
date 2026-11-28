@@ -1,0 +1,30 @@
+.condominium-selector {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-8);
+    width: 100%;
+}
+
+.condominium-selector label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+}
+
+.condominium-selector select {
+    width: 100%;
+    min-height: 44px;
+    padding: var(--spacing-12);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background-color: var(--color-background);
+    color: var(--color-text-primary);
+    font-family: inherit;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.condominium-selector select:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+}

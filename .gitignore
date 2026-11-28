@@ -1,0 +1,8 @@
+# variáveis de ambiente com chaves e senhas (nunca vão para o Git)
+.env
+.env.*
+!.env.example
+
+# dependências e arquivos gerados no build
+node_modules/
+dist/
