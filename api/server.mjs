@@ -208,6 +208,24 @@ async function listarMeusCondominios(request, response, cors, parametros) {
   sendJson(response, 200, { pagina: paginacao.pagina, por_pagina: paginacao.porPagina, total, condominios }, cors);
 }
 
+// ORB-55: GET /areas — as áreas de atendimento ativas, cada uma com as suas categorias.
+// O catálogo é o mesmo para todo mundo que está logado. É pequeno e fixo, por isso vem inteiro, sem paginação.
+async function listarAreas(request, response, cors) {
+  const token = lerToken(request);
+  if (!token) {
+    sendJson(response, 401, { error: 'nao_autenticado', mensagem: 'Entre na sua conta.' }, cors);
+    return;
+  }
+  const { dados, erro } = await consultarSupabase(
+    'areas_atendimento?select=id,slug,nome,categorias(slug,nome)&ativo=eq.true&order=nome&categorias.order=ordem',
+    token);
+  if (erro) {
+    sendJson(response, erro[0], erro[1], cors);
+    return;
+  }
+  sendJson(response, 200, { total: dados.length, areas: dados }, cors);
+}
+
 // ORB-27: GET /ocorrencias?condominio_id=1 — a fila do condomínio, mais recentes primeiro.
 // Síndico recebe a fila inteira; morador recebe só os chamados dele (regra do ORB-18, na RLS).
 async function listarOcorrencias(request, response, cors, parametros) {
@@ -349,6 +367,30 @@ const server = createServer(async (request, response) => {
     if (request.method === 'GET') {
       try {
         await listarMeusCondominios(request, response, cors, url.searchParams);
+      } catch (erro) {
+        console.error('Erro inesperado:', erro);
+        if (!response.headersSent) sendJson(response, 500, { error: 'erro_interno', recuperavel: true }, cors);
+      }
+      return;
+    }
+    sendJson(response, 405, { error: 'method_not_allowed' }, { Allow: 'GET, OPTIONS', ...cors });
+    return;
+  }
+
+  if (path === '/areas') {
+    if (request.method === 'OPTIONS') {
+      response.writeHead(204, {
+        ...cors,
+        'Access-Control-Allow-Methods': 'GET, OPTIONS',
+        'Access-Control-Allow-Headers': 'Authorization, Content-Type',
+        'Access-Control-Max-Age': '600',
+      });
+      response.end();
+      return;
+    }
+    if (request.method === 'GET') {
+      try {
+        await listarAreas(request, response, cors);
       } catch (erro) {
         console.error('Erro inesperado:', erro);
         if (!response.headersSent) sendJson(response, 500, { error: 'erro_interno', recuperavel: true }, cors);
