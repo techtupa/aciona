@@ -1,0 +1,8 @@
+# Aciona - envia rotas do React Router ao index.html.
+RewriteEngine On
+
+# Preserva os arquivos do build e as verificações do domínio.
+RewriteRule ^(?:assets|\.well-known)(?:/|$) - [L]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.html [L]
